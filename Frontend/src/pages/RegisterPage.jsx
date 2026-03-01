@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { showToast } from "../components/Toast";
 
 export default function RegisterPage() {
     const [username, setUsername] = useState("");
@@ -27,8 +28,10 @@ export default function RegisterPage() {
         setLoading(true);
         try {
             await register(username, password);
+            showToast("Account created! Please sign in.", "success");
             navigate("/login");
         } catch (err) {
+            showToast("Registration failed", "error");
             setError(err.response?.data?.detail || "Registration failed");
         } finally {
             setLoading(false);

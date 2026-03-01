@@ -3,6 +3,7 @@
 import sqlite3
 import logging
 from typing import Optional
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -112,3 +113,51 @@ def is_document_analyzed(conn: sqlite3.Connection, doc_id: str) -> bool:
         (doc_id,),
     )
     return cursor.fetchone() is not None
+
+def delete_document(conn: sqlite3.Connection, doc_id: str) -> None:
+    """Delete a document and all its clauses."""
+    conn.execute("DELETE FROM clauses WHERE document_id = ?", (doc_id,))
+    conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+    conn.commit()
+    logger.info("Deleted document %s and its clauses", doc_id)
+
+# Chat Repository
+def create_chat_session(conn: sqlite3.Connection, session_id: str, username: str, title: str, doc_id: str = None) -> dict:
+    conn.execute(
+        "INSERT INTO chat_sessions (id, username, doc_id, title) VALUES (?, ?, ?, ?)",
+        (session_id, username, doc_id, title),
+    )
+    conn.commit()
+    return {"id": session_id, "username": username, "doc_id": doc_id, "title": title}
+def list_chat_sessions(conn: sqlite3.Connection, username: str, doc_id: str = None) -> list[dict]:
+    if doc_id:
+        cursor = conn.execute(
+            "SELECT * FROM chat_sessions WHERE username = ? AND doc_id = ? ORDER BY created_at DESC",
+            (username, doc_id),
+        )
+    else:
+        cursor = conn.execute(
+            "SELECT * FROM chat_sessions WHERE username = ? ORDER BY created_at DESC",
+            (username,),
+        )
+    return [dict(row) for row in cursor.fetchall()]
+def add_chat_message(conn: sqlite3.Connection, session_id: str, role: str, content: str, meta: dict = None) -> None:
+    conn.execute(
+        "INSERT INTO chat_messages (session_id, role, content, meta) VALUES (?, ?, ?, ?)",
+        (session_id, role, content, json.dumps(meta) if meta else None),
+    )
+    conn.commit()
+def get_chat_messages(conn: sqlite3.Connection, session_id: str) -> list[dict]:
+    cursor = conn.execute(
+        "SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC",
+        (session_id,),
+    )
+    rows = [dict(row) for row in cursor.fetchall()]
+    for r in rows:
+        if r.get("meta"):
+            r["meta"] = json.loads(r["meta"])
+    return rows
+def delete_chat_session(conn: sqlite3.Connection, session_id: str) -> None:
+    conn.execute("DELETE FROM chat_messages WHERE session_id = ?", (session_id,))
+    conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+    conn.commit()

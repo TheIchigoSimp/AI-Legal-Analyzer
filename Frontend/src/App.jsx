@@ -7,6 +7,7 @@ import DocumentPage from "./pages/DocumentPage";
 import GlobalChatPage from "./pages/GlobalChatPage";
 import RiskDashboard from "./pages/RiskDashboard";
 import ToastContainer from "./components/Toast";
+import ThemeToggle from "./components/ThemeToggle";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -25,6 +26,7 @@ function App() {
         <Route path="/chat" element={<ProtectedRoute><GlobalChatPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <ThemeToggle />
       <ToastContainer />
     </>
   );

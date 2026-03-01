@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.env
+data/
+uploads/
+legalanalyzer/
+.git
+.gitignore
+*.md
+tests/
+uv.lock

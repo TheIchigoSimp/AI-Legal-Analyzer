@@ -46,7 +46,8 @@ export default function DashboardPage() {
                 ) : (
                     <div className="doc-grid">
                         {docs.map((doc) => (
-                            <DocumentCard key={doc.id} doc={doc} />
+                            <DocumentCard key={doc.id} doc={doc} onDeleted={fetchDocs} />
+
                         ))}
                     </div>
                 )}

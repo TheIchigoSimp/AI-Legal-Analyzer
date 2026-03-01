@@ -35,6 +35,23 @@ CREATE TABLE IF NOT EXISTS clauses (
     risk_level TEXT,
     risk_reason TEXT
 );
+
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    doc_id TEXT,
+    title TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL REFERENCES chat_sessions(id),
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    meta TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
 """
 
 def get_db_path() -> str:

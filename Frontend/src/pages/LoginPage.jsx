@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { showToast } from "../components/Toast";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -16,8 +17,10 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(username, password);
+            showToast("Welcome back!", "success");
             navigate("/");
         } catch (err) {
+            showToast("Login failed", "error");
             setError(err.response?.data?.detail || "Login failed");
         } finally {
             setLoading(false);
