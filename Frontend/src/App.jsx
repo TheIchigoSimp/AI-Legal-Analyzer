@@ -5,6 +5,8 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import DocumentPage from "./pages/DocumentPage";
 import GlobalChatPage from "./pages/GlobalChatPage";
+import RiskDashboard from "./pages/RiskDashboard";
+import ToastContainer from "./components/Toast";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -13,14 +15,18 @@ function ProtectedRoute({ children }) {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/documents/:docId" element={<ProtectedRoute><DocumentPage /></ProtectedRoute>} />
-      <Route path="/chat" element={<ProtectedRoute><GlobalChatPage /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><RiskDashboard /></ProtectedRoute>} />
+        <Route path="/documents/:docId" element={<ProtectedRoute><DocumentPage /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><GlobalChatPage /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+      <ToastContainer />
+    </>
   );
 }
 

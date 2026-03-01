@@ -33,7 +33,61 @@ def list_documents(current_user: dict = Depends(get_current_user)):
         docs = list_user_documents(conn, current_user["username"])
         for doc in docs:
             doc["is_analyzed"] = is_document_analyzed(conn, doc["id"])
+            clauses = get_clauses_by_document(conn, doc["id"])
+            doc["clause_count"] = len(clauses)
         return docs
+    finally:
+        conn.close()
+
+
+@router.get("/stats")
+def get_stats(current_user: dict = Depends(get_current_user)):
+    """Get analysis statistics for the current user's documents."""
+    conn = get_db()
+    try:
+        docs = list_user_documents(conn, current_user["username"])
+        total_docs = len(docs)
+        analyzed_docs = sum(1 for d in docs if is_document_analyzed(conn, d["id"]))
+
+        all_clauses = []
+        for doc in docs:
+            clauses = get_clauses_by_document(conn, doc["id"])
+            for c in clauses:
+                c["doc_filename"] = doc["filename"]
+            all_clauses.extend(clauses)
+
+        total_clauses = len(all_clauses)
+        analyzed_clauses = [c for c in all_clauses if c.get("clause_type")]
+
+        risk_counts = {"High": 0, "Medium": 0, "Low": 0}
+        for c in analyzed_clauses:
+            level = c.get("risk_level", "Low")
+            if level in risk_counts:
+                risk_counts[level] += 1
+
+        top_risky = sorted(
+            [c for c in analyzed_clauses if c.get("risk_level") == "High"],
+            key=lambda c: c.get("section_title", ""),
+        )[:5]
+
+        return {
+            "total_documents": total_docs,
+            "analyzed_documents": analyzed_docs,
+            "total_clauses": total_clauses,
+            "analyzed_clauses": len(analyzed_clauses),
+            "risk_distribution": risk_counts,
+            "top_risky_clauses": [
+                {
+                    "clause_id": c["id"],
+                    "section_title": c.get("section_title", "Untitled"),
+                    "clause_type": c.get("clause_type"),
+                    "risk_reason": c.get("risk_reason"),
+                    "doc_filename": c.get("doc_filename"),
+                    "page": c.get("page"),
+                }
+                for c in top_risky
+            ],
+        }
     finally:
         conn.close()
 
@@ -122,6 +176,8 @@ def get_document_clauses(
     finally:
         conn.close()
 
+
+
 @router.post("/{doc_id}/analyze", response_model=list[ClassifiedClause])
 def analyze_document(
     doc_id: str,
@@ -170,3 +226,4 @@ def analyze_document(
         return results
     finally:
         conn.close()
+

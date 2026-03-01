@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import client from "../api/client";
 import Navbar from "../components/Navbar";
 import ClauseCard from "../components/ClauseCard";
@@ -58,6 +58,10 @@ export default function DocumentPage() {
             <Navbar />
             <div className="page-container">
                 <div className="page-header">
+                    <button className="btn btn-outline btn-sm" onClick={() => navigate("/")} style={{ marginBottom: "0.5rem" }}>
+                        ← Back to Dashboard
+                    </button>
+
                     <div>
                         <h1>{doc.filename}</h1>
                         <p className="doc-page-meta">

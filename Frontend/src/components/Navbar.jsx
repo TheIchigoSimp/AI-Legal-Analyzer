@@ -24,6 +24,11 @@ export default function Navbar() {
                     <span className="sidebar-icon">📄</span>
                     Documents
                 </Link>
+                <Link to="/dashboard" className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}>
+                    <span className="sidebar-icon">📊</span>
+                    Risk Dashboard
+                </Link>
+
                 <Link to="/chat" className={`sidebar-link ${isActive("/chat") ? "active" : ""}`}>
                     <span className="sidebar-icon">💬</span>
                     Global Chat

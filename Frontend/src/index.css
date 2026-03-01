@@ -813,3 +813,170 @@ a:hover {
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+
+/* ===== Toast ===== */
+.toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 999;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.813rem;
+  font-weight: 500;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+}
+
+.toast-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--risk-low);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.toast-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--risk-high);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.toast-info {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* ===== Stats Grid ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ===== Dashboard Grid ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.dashboard-grid h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.empty-text {
+  color: var(--text-muted);
+  font-size: 0.813rem;
+}
+
+/* ===== Risk Bars ===== */
+.risk-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.risk-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.risk-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.risk-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.risk-bar-fill.high {
+  background: var(--risk-high);
+}
+
+.risk-bar-fill.medium {
+  background: var(--risk-medium);
+}
+
+.risk-bar-fill.low {
+  background: var(--risk-low);
+}
+
+.risk-bar-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 2rem;
+  text-align: right;
+}
+
+/* ===== Risky List ===== */
+.risky-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.risky-item {
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.risky-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
+}
+
+.risky-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.risky-doc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.risky-reason {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}

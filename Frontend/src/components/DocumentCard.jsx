@@ -10,8 +10,9 @@ export default function DocumentCard({ doc }) {
                 <div className="doc-info">
                     <h3 className="doc-title">{doc.filename}</h3>
                     <p className="doc-meta">
-                        {doc.page_count} pages • Uploaded {new Date(doc.created_at).toLocaleDateString()}
+                        {doc.page_count} pages • {doc.clause_count || 0} clauses • {new Date(doc.created_at).toLocaleDateString()}
                     </p>
+
                 </div>
             </div>
             <div className="doc-card-footer">
