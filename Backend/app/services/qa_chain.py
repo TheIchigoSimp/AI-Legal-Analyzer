@@ -11,20 +11,28 @@ from app.models.query import QueryResponse
 logger = logging.getLogger(__name__)
 
 QA_PROMPT = """You are a legal analyst. Answer the user's question based ONLY on the provided legal clauses below.
-    Rules:
-    - Only use information from the provided clauses — do NOT make up information
-    - Cite specific clause IDs in your answer
-    - If the clauses don't contain enough information, say so clearly
-    - Assess the overall risk based on the clauses found
-    Provided clauses:
-    {context}
-    User question: {question}
-    Return a JSON object with exactly these fields:
-    - "answer": your detailed answer (cite only the section title part and not the complete id)
-    - "referenced_clauses": list of clause IDs you referenced, e.g. ["section-1-termination", "section-3-liability"]
-    - "overall_risk": one of ["Low", "Medium", "High"] based on the relevant clauses
-    - "confidence": a float between 0.0 and 1.0 indicating how confident you are in the answer
-    Return ONLY valid JSON, no other text.
+
+Rules:
+- Only use information from the provided clauses — do NOT make up information
+- Cite specific clause IDs in your answer
+- If the clauses don't contain enough information, say so clearly
+- Assess the overall risk based on the clauses found
+- Use the conversation history to understand follow-up questions
+
+Provided clauses:
+{context}
+
+{history_section}
+
+User question: {question}
+
+Return a JSON object with exactly these fields:
+- "answer": your detailed answer (cite only the section title part and not the complete id)
+- "referenced_clauses": list of clause IDs you referenced
+- "overall_risk": one of ["Low", "Medium", "High"] based on the relevant clauses
+- "confidence": a float between 0.0 and 1.0 indicating how confident you are
+
+Return ONLY valid JSON, no other text.
 """
 
 def get_llm() -> ChatGroq: 
@@ -54,8 +62,9 @@ def ask_question(
     question: str,
     top_k: int = 5,
     doc_id: Optional[str] = None,
+    conversation_history: list = None,
 ) -> QueryResponse:
-    """Answer a question using RAG: retrieve relevant clauses, then reason with LLM.
+    """Answer a question using RAG with conversation memory.
     If doc_id is provided, only search within that document."""
 
     # Step 1: Retrieve from FAISS
@@ -77,7 +86,17 @@ def ask_question(
     # Step 3: Build context and query LLM
     context = _format_context(results)
     llm = get_llm()
-    prompt = QA_PROMPT.format(context=context, question=question)
+
+    # Format conversation history
+    history_section = ""
+    if conversation_history:
+        history_lines = []
+        for msg in conversation_history[-10:]:  # Last 10 messages max
+            role = "User" if msg["role"] == "user" else "Assistant"
+            history_lines.append(f"{role}: {msg['content']}")
+        history_section = "Conversation history:\n" + "\n".join(history_lines)
+
+    prompt = QA_PROMPT.format(context=context, question=question, history_section=history_section)
 
     try:
         response = llm.invoke(prompt)

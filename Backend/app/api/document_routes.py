@@ -8,7 +8,11 @@ from app.core.config import get_settings
 from app.api.deps import get_current_user
 
 from app.db.database import get_db
-from app.db.repositories import create_document, insert_clauses, get_clauses_by_document, get_document, list_user_documents, is_document_analyzed
+from app.db.repositories import (
+    create_document, insert_clauses, get_clauses_by_document,
+    get_document, list_user_documents, is_document_analyzed,
+    update_clause_classification, delete_document
+)
 
 from app.services.pdf_extractor import extract_pages
 from app.services.segmenter import segment_document
@@ -91,6 +95,102 @@ def get_stats(current_user: dict = Depends(get_current_user)):
     finally:
         conn.close()
 
+@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document_endpoint(doc_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a document, its clauses, and uploaded PDF."""
+    conn = get_db()
+    try:
+        doc = get_document(conn, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+        if doc["uploaded_by"] != current_user["username"]:
+            raise HTTPException(status_code=403, detail="Not your document")
+
+        # Delete from DB
+        delete_document(conn, doc_id)
+
+        # Delete PDF file
+        settings = get_settings()
+        pdf_path = Path(settings.upload_dir) / f"{doc_id}.pdf"
+        if pdf_path.exists():
+            pdf_path.unlink()
+            logger.info("Deleted PDF file: %s", pdf_path)
+
+    finally:
+        conn.close()
+
+from fastapi.responses import FileResponse
+
+@router.get("/{doc_id}/pdf")
+def get_document_pdf(doc_id: str, current_user: dict = Depends(get_current_user)):
+    """Serve the uploaded PDF file."""
+    conn = get_db()
+    try:
+        doc = get_document(conn, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+    finally:
+        conn.close()
+
+    settings = get_settings()
+    pdf_path = Path(settings.upload_dir) / f"{doc_id}.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF file not found")
+
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        filename=doc["filename"],
+    )
+
+@router.get("/{doc_id}/export")
+def export_document_report(doc_id: str, current_user: dict = Depends(get_current_user)):
+    """Export analysis report as JSON."""
+    conn = get_db()
+    try:
+        doc = get_document(conn, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        rows = get_clauses_by_document(conn, doc_id)
+        clauses = [
+            {
+                "section_title": r.get("section_title", "Untitled"),
+                "text": r["text"],
+                "page": r["page"],
+                "clause_type": r.get("clause_type"),
+                "importance": r.get("importance"),
+                "risk_level": r.get("risk_level"),
+                "risk_reason": r.get("risk_reason"),
+            }
+            for r in rows
+        ]
+
+        risk_counts = {"High": 0, "Medium": 0, "Low": 0}
+        for c in clauses:
+            level = c.get("risk_level")
+            if level in risk_counts:
+                risk_counts[level] += 1
+
+        report = {
+            "document": {
+                "filename": doc["filename"],
+                "page_count": doc["page_count"],
+                "uploaded_by": doc["uploaded_by"],
+                "created_at": doc["created_at"],
+                "is_analyzed": is_document_analyzed(conn, doc_id),
+            },
+            "summary": {
+                "total_clauses": len(clauses),
+                "risk_distribution": risk_counts,
+            },
+            "clauses": clauses,
+        }
+        return report
+    finally:
+        conn.close()
+
+
 
 @router.get("/{doc_id}")
 def get_document_detail(doc_id: str, current_user: dict = Depends(get_current_user)):
@@ -152,7 +252,7 @@ def upload_document(
         clauses=clauses,
     )
 
-@router.get("/{doc_id}/clauses", response_model=list[Clause])
+@router.get("/{doc_id}/clauses")
 def get_document_clauses(
     doc_id: str,
     current_user: dict = Depends(get_current_user),
@@ -165,12 +265,16 @@ def get_document_clauses(
             raise HTTPException(status_code=404, detail="Document not found")
         rows = get_clauses_by_document(conn, doc_id)
         return [
-            Clause(
-                clause_id=r["id"],
-                section_title=r["section_title"] or "Untitled",
-                text=r["text"],
-                page=r["page"],
-            )
+            {
+                "clause_id": r["id"],
+                "section_title": r["section_title"] or "Untitled",
+                "text": r["text"],
+                "page": r["page"],
+                "clause_type": r.get("clause_type"),
+                "importance": r.get("importance"),
+                "risk_level": r.get("risk_level"),
+                "risk_reason": r.get("risk_reason"),
+            }
             for r in rows
         ]
     finally:

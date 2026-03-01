@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import client from "../api/client";
+import { showToast } from "./Toast";
 
 export default function UploadModal({ onClose, onUploaded }) {
     const [file, setFile] = useState(null);
@@ -20,9 +21,11 @@ export default function UploadModal({ onClose, onUploaded }) {
             await client.post("/documents/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
+            showToast("Document uploaded successfully!", "success");
             onUploaded();
             onClose();
         } catch (err) {
+            showToast("Upload failed", "error");
             setError(err.response?.data?.detail || "Upload failed");
         } finally {
             setLoading(false);
